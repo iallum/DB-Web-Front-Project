@@ -201,7 +201,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-    query = 'SELECT email FROM "user" WHERE email = :email AND password = :password'
+    	query = 'SELECT email FROM "user" WHERE email = :email AND password = :password'
         params = {"email": email, "password": password}
 
         cursor = g.conn.execute(text(query), params)
