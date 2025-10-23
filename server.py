@@ -107,7 +107,8 @@ def index():
     
     # They're logged in, show the page
     email = session.get('email')
-	"""
+	
+	'''
 	request is a special object that Flask provides to access web request information:
 
 	request.method:   "GET" or "POST"
@@ -115,7 +116,7 @@ def index():
 	request.args:     dictionary of URL arguments, e.g., {a:1, b:2} for http://localhost?a=1&b=2
 
 	See its API: https://flask.palletsprojects.com/en/1.1.x/api/#incoming-request-data
-	"""
+	'''
 
 	# DEBUG: this is debugging code to see what request looks like
 	print(request.args)
