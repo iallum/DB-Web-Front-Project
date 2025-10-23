@@ -185,8 +185,7 @@ def another():
 def add():
     # accessing form inputs from user
     name = request.form['name']
-    
-    # passing params in for each variable into query
+        # passing params in for each variable into query
     params = {}
     params["new_name"] = name
     g.conn.execute(text('INSERT INTO test(name) VALUES (:new_name)'), params)
@@ -202,7 +201,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        query = "SELECT email FROM 'user' WHERE email = :email AND password = :password"
+	query = 'SELECT email FROM "user" WHERE email = :email AND password = :password'
         params = {"email": email, "password": password}
 
         cursor = g.conn.execute(text(query), params)
