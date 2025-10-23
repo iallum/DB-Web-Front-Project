@@ -201,7 +201,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        query = 'SELECT email FROM "user" WHERE email = :email AND password = :password'
+        query = 'SELECT email, name FROM "user" WHERE email = :email AND password = :password'
         params = {"email": email, "password": password}
 
         cursor = g.conn.execute(text(query), params)
@@ -210,7 +210,8 @@ def login():
 
         if user:
             # Login successful
-            session['email'] = email
+            session['email'] = user[0]
+            session['name'] = user[1]
             session['logged_in'] = True
             return redirect('/')
         else:
