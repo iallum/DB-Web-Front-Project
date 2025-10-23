@@ -1,29 +1,99 @@
+<!DOCTYPE html>
 <html>
-  <style>
-    body{ 
-      font-size: 15pt;
-      font-family: arial;
-    }
-  </style>
-
-
+<head>
+    <title>Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 400px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .login-form {
+            border: 1px solid #ddd;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 {
+            margin-top: 0;
+            text-align: center;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="email"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .flash-messages {
+            margin-bottom: 20px;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
-
-  <div>
-    {% for n in data %}
-    <div>{{n}}</div>
-    {% endfor %}
-  </div>
-
-<p><a href="another">Go to the other page</a></p>
-
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
-
+    <div class="login-form">
+        <h2>Login</h2>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="/login">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </body>
-
-
 </html>
