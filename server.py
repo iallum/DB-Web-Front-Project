@@ -12,7 +12,7 @@ import os
 # accessible as a variable in index.html:
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, abort
+from flask import Flask, request, render_template, g, redirect, Response, abort, session, flash
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -188,13 +188,45 @@ def add():
 	return redirect('/')
 
 
+app.secret_key = 'simple-secret-key-for-class'
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+
+		query = "SELECT email FROM 'user' WHERE email = :email AND password = :password"
+        params = {"email": email, "password": password}
+
+		cursor = g.conn.execute(text(query), params)
+        user = cursor.fetchone()
+        cursor.close()
+
+		if user:
+            # Login successful
+            session['email'] = email
+            session['logged_in'] = True
+            return redirect('/')
+        else:
+            # Login failed
+            return render_template('login.html', error='Invalid email or password')
+	
+	return render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
+
+'''
 @app.route('/login')
 def login():
 	abort(401)
 	# Your IDE may highlight this as a problem - because no such function exists (intentionally).
 	# This code is never executed because of abort().
 	this_is_never_executed()
-
+'''
 
 if __name__ == "__main__":
 	import click
