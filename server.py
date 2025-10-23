@@ -102,6 +102,11 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
+    if not session.get('logged_in'):
+        return redirect('/login')  # Force them to login
+    
+    # They're logged in, show the page
+    email = session.get('email')
 	"""
 	request is a special object that Flask provides to access web request information:
 
