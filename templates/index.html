@@ -8,14 +8,24 @@
 
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+  <h2>Welcome, {{ session.name }}!</h2>
 
+  <h2>Your Events:</h2>
+
+  {% for event in events %}
   <div>
-    {% for n in data %}
-    <div>{{n}}</div>
-    {% endfor %}
+      <p>
+          {{ event.host }}'s event at {{ event.location }} on {{ event.date }}: 
+          {% if event.status == True %}
+              going
+          {% elif event.status == False %}
+              not going
+          {% else %}
+              tbd
+          {% endif %}
+      </p>
   </div>
+  {% endfor %}
 
 <p><a href="another">Go to the other page</a></p>
 

@@ -125,11 +125,26 @@ def index():
     #
     # example of a database query
     #
-    select_query = "SELECT name from test"
-    cursor = g.conn.execute(text(select_query))
-    names = []
+    user_id = session.get('user_id')
+    
+    select_query = """SELECT u.name, e.location, e.date_time, i.accept_status 
+                      FROM invite_guest i 
+                      JOIN create_event c ON i.event_id = c.event_id 
+                      JOIN "user" u ON u.user_id = c.user_id 
+                      JOIN event e ON e.event_id = i.event_id 
+                      WHERE i.user_id = :user_id"""
+    
+    params = {"user_id": user_id}
+    cursor = g.conn.execute(text(select_query), params)
+    
+    events = []
     for result in cursor:
-        names.append(result[0])
+        events.append({
+			'host': result[0],
+			'location': result[1],
+			'date': result[2],
+			'status': result[3]
+		})
     cursor.close()
 
     #
@@ -158,9 +173,8 @@ def index():
     #     <div>{{n}}</div>
     #     {% endfor %}
     #
-    context = dict(data = names)
-
-
+    context = dict(events=events)
+    
     #
     # render_template looks in the templates/ folder for files.
     # for example, the below file reads template/index.html
@@ -201,7 +215,7 @@ def login():
         email = request.form['email']
         password = request.form['password']
 
-        query = 'SELECT email, name FROM "user" WHERE email = :email AND password = :password'
+        query = 'SELECT email, name , user_id FROM "user" WHERE email = :email AND password = :password'
         params = {"email": email, "password": password}
 
         cursor = g.conn.execute(text(query), params)
@@ -212,6 +226,7 @@ def login():
             # Login successful
             session['email'] = user[0]
             session['name'] = user[1]
+            session['user_id'] = user[2]
             session['logged_in'] = True
             return redirect('/')
         else:
