@@ -10,18 +10,41 @@
 <body>
   <h2>Welcome, {{ session.name }}!</h2>
 
-  <h2>Your Events:</h2>
+  <h2>Upcoming Events:</h2>
 
-  {% for event in events %}
+  {% for event in upcoming_events %}
   <div>
       <p>
-          {{ event.host }}'s event at {{ event.location }} on {{ event.date }}: 
+          {{ event.event_name }}<br>
+          Host: {{ event.host }}<br>
+          Details: {{ event.location }} on {{ event.date }}<br>
+          Status: 
           {% if event.status == True %}
-              going
+              Attending
           {% elif event.status == False %}
-              not going
+              Not Attending
           {% else %}
-              tbd
+              TBD
+          {% endif %}
+      </p>
+  </div>
+  {% endfor %}
+
+  <h2>Past Events:</h2>
+
+  {% for event in past_events %}
+  <div>
+      <p>
+          {{ event.event_name }}<br>
+          Host: {{ event.host }}<br>
+          Details: {{ event.location }} on {{ event.date }}<br>
+          Status: 
+          {% if event.status == True %}
+              Attended
+          {% elif event.status == False %}
+              Did Not Attend
+          {% else %}
+              No Response
           {% endif %}
       </p>
   </div>

@@ -13,6 +13,7 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, abort, session, flash
+from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -127,24 +128,36 @@ def index():
     #
     user_id = session.get('user_id')
     
-    select_query = """SELECT u.name, e.location, e.date_time, i.accept_status 
+    select_query = """SELECT u.name, e.event_name, e.location, e.date_time, i.accept_status 
                       FROM invite_guest i 
                       JOIN create_event c ON i.event_id = c.event_id 
                       JOIN "user" u ON u.user_id = c.user_id 
                       JOIN event e ON e.event_id = i.event_id 
-                      WHERE i.user_id = :user_id"""
+                      WHERE i.user_id = :user_id
+                      ORDER BY e.date_time"""
     
     params = {"user_id": user_id}
     cursor = g.conn.execute(text(select_query), params)
     
-    events = []
+    upcoming_events = []
+    past_events = []
+    now = datetime.now()
+    
     for result in cursor:
-        events.append({
-			'host': result[0],
-			'location': result[1],
-			'date': result[2],
-			'status': result[3]
-		})
+        event_date = result[3]
+    
+        formatted_date = event_date.strftime('%m/%d/%y at %I:%M %p')
+        event = {
+            'host': result[0],
+            'event_name': result[1],
+            'location': result[2],
+            'date': formatted_date,
+            'status': result[4]
+        }
+        if result[3] < now:
+            past_events.append(event)
+        else:
+            upcoming_events.append(event)
     cursor.close()
 
     #
@@ -173,7 +186,10 @@ def index():
     #     <div>{{n}}</div>
     #     {% endfor %}
     #
-    context = dict(events=events)
+    context = dict(
+        upcoming_events=upcoming_events,
+        past_events=past_events
+    )
     
     #
     # render_template looks in the templates/ folder for files.
