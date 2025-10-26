@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>{{ recipe.title }}</title></head>
+  <body>
+    <p><a href="/recipes">← All recipes</a></p>
+    <h1>{{ recipe.title }}</h1>
+
+    {% if recipe.avg_rating is not none %}
+      <p>Average rating: ⭐ {{ "%.1f"|format(recipe.avg_rating) }}</p>
+    {% endif %}
+
+    <h2>Instructions</h2>
+    <pre style="white-space:pre-wrap">{{ recipe.instructions }}</pre>
+  </body>
+</html>
