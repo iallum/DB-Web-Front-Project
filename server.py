@@ -271,19 +271,16 @@ from math import ceil
 from sqlalchemy import text
 
 @app.route('/recipes')
+@app.route('/recipes')
 def recipes():
-    print("[/recipes] route hit!", flush=True)   # 👈 add this as the first line
-
     if not session.get('logged_in'):
         return redirect('/login')
 
-    # Pagination & search
+    # pagination + search
     try:
-        page = int(request.args.get('page', 1))
-        if page < 1: page = 1
+        page = max(int(request.args.get('page', 1)), 1)
     except ValueError:
         page = 1
-
     try:
         per_page = int(request.args.get('per_page', 12))
         if per_page < 1 or per_page > 50:
@@ -293,38 +290,37 @@ def recipes():
 
     q = (request.args.get('q') or '').strip()
 
-    base_sql = """
-    SELECT
+    where = "WHERE r.title ILIKE :q" if q else ""
+    params = {"limit": per_page, "offset": (page - 1) * per_page}
+    if q:
+        params["q"] = f"%{q}%"
+
+    # keep it simple first; no ratings until list renders
+    base_sql = f"""
+      SELECT
         r.recipe_id,
         r.title,
         COALESCE(SUBSTRING(COALESCE(r.instructions, '') FOR 120), '') AS preview
-    FROM recipe r
-    {where}
-    ORDER BY r.title ASC
-    LIMIT :limit OFFSET :offset
+      FROM recipe r
+      {where}
+      ORDER BY r.title ASC
+      LIMIT :limit OFFSET :offset
     """
+    count_sql = f"SELECT COUNT(*) FROM recipe r {where}"
 
-    count_sql = "SELECT COUNT(*) FROM recipe r {where}"
-
-    params = {"limit": per_page, "offset": (page - 1) * per_page}
-    where = ""
-    if q:
-        where = "WHERE r.title ILIKE :q"
-        params["q"] = f"%{q}%"
-
-    rows = g.conn.execute(text(base_sql.format(where=where)), params).mappings().all()
-    print(f"[/recipes] fetched {len(rows)} rows")  # ← Add this line here
-    count = g.conn.execute(text(count_sql.format(where=where)), params).scalar()
+    rows = g.conn.execute(text(base_sql), params).mappings().all()
+    count = g.conn.execute(text(count_sql), params).scalar()
     has_more = (page * per_page) < count
 
-    recipes = []
-    for row in rows:
-        recipes.append({
-            "recipe_id": row["recipe_id"],
-            "title": row["title"],
-            "preview": row["preview"],
-            "avg_rating": row["avg_rating"]
-        })
+    recipes = [
+        {
+            "recipe_id": r["recipe_id"],
+            "title": r["title"],
+            "preview": r["preview"],
+            "avg_rating": None,  # add real avg later
+        }
+        for r in rows
+    ]
 
     return render_template(
         "recipes.html",
@@ -332,16 +328,7 @@ def recipes():
         page=page,
         per_page=per_page,
         has_more=has_more,
-        q=qbase_sql = """
-  SELECT
-    r.recipe_id,
-    r.title,
-    COALESCE(SUBSTRING(COALESCE(r.instructions, '') FOR 120), '') AS preview
-  FROM recipe r
-  {where}
-  ORDER BY r.title ASC
-  LIMIT :limit OFFSET :offset
-"""
+        q=q,                 # ← make sure this is ONLY q=q
     )
 
 
