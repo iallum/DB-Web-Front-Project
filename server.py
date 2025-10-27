@@ -272,6 +272,8 @@ from sqlalchemy import text
 
 @app.route('/recipes')
 def recipes():
+    print("[/recipes] route hit!", flush=True)   # 👈 add this as the first line
+
     if not session.get('logged_in'):
         return redirect('/login')
 
