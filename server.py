@@ -292,16 +292,14 @@ def recipes():
     q = (request.args.get('q') or '').strip()
 
     base_sql = """
-      SELECT r.recipe_id,
-             r.title,
-             SUBSTRING(r.instructions FOR 120) AS preview,
-             AVG(rv.rating)::float AS avg_rating
-      FROM recipe r
-      LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
-      {where}
-      GROUP BY r.recipe_id, r.title, preview
-      ORDER BY r.title ASC
-      LIMIT :limit OFFSET :offset
+    SELECT
+        r.recipe_id,
+        r.title,
+        COALESCE(SUBSTRING(COALESCE(r.instructions, '') FOR 120), '') AS preview
+    FROM recipe r
+    {where}
+    ORDER BY r.title ASC
+    LIMIT :limit OFFSET :offset
     """
 
     count_sql = "SELECT COUNT(*) FROM recipe r {where}"
@@ -313,6 +311,7 @@ def recipes():
         params["q"] = f"%{q}%"
 
     rows = g.conn.execute(text(base_sql.format(where=where)), params).mappings().all()
+    print(f"[/recipes] fetched {len(rows)} rows")  # ← Add this line here
     count = g.conn.execute(text(count_sql.format(where=where)), params).scalar()
     has_more = (page * per_page) < count
 
@@ -331,7 +330,16 @@ def recipes():
         page=page,
         per_page=per_page,
         has_more=has_more,
-        q=q
+        q=qbase_sql = """
+  SELECT
+    r.recipe_id,
+    r.title,
+    COALESCE(SUBSTRING(COALESCE(r.instructions, '') FOR 120), '') AS preview
+  FROM recipe r
+  {where}
+  ORDER BY r.title ASC
+  LIMIT :limit OFFSET :offset
+"""
     )
 
 
