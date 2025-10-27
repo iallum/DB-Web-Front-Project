@@ -295,7 +295,6 @@ def recipes():
     if q:
         params["q"] = f"%{q}%"
 
-    # keep it simple first; no ratings until list renders
     base_sql = f"""
       SELECT
         r.recipe_id,
@@ -317,7 +316,7 @@ def recipes():
             "recipe_id": r["recipe_id"],
             "title": r["title"],
             "preview": r["preview"],
-            "avg_rating": None,  # add real avg later
+            "avg_rating": None,  
         }
         for r in rows
     ]
@@ -328,7 +327,7 @@ def recipes():
         page=page,
         per_page=per_page,
         has_more=has_more,
-        q=q,                 # ← make sure this is ONLY q=q
+        q=q,                 
     )
 
 
