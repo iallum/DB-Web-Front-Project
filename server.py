@@ -265,6 +265,105 @@ def login():
     this_is_never_executed()
 '''
 
+
+##############################
+from math import ceil
+from sqlalchemy import text
+
+@app.route('/recipes')
+def recipes():
+    if not session.get('logged_in'):
+        return redirect('/login')
+
+    # Pagination & search
+    try:
+        page = int(request.args.get('page', 1))
+        if page < 1: page = 1
+    except ValueError:
+        page = 1
+
+    try:
+        per_page = int(request.args.get('per_page', 12))
+        if per_page < 1 or per_page > 50:
+            per_page = 12
+    except ValueError:
+        per_page = 12
+
+    q = (request.args.get('q') or '').strip()
+
+    base_sql = """
+      SELECT r.recipe_id,
+             r.title,
+             SUBSTRING(r.instructions FOR 120) AS preview,
+             AVG(rv.rating)::float AS avg_rating
+      FROM recipe r
+      LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+      {where}
+      GROUP BY r.recipe_id, r.title, preview
+      ORDER BY r.title ASC
+      LIMIT :limit OFFSET :offset
+    """
+
+    count_sql = "SELECT COUNT(*) FROM recipe r {where}"
+
+    params = {"limit": per_page, "offset": (page - 1) * per_page}
+    where = ""
+    if q:
+        where = "WHERE r.title ILIKE :q"
+        params["q"] = f"%{q}%"
+
+    rows = g.conn.execute(text(base_sql.format(where=where)), params).mappings().all()
+    count = g.conn.execute(text(count_sql.format(where=where)), params).scalar()
+    has_more = (page * per_page) < count
+
+    recipes = []
+    for row in rows:
+        recipes.append({
+            "recipe_id": row["recipe_id"],
+            "title": row["title"],
+            "preview": row["preview"],
+            "avg_rating": row["avg_rating"]
+        })
+
+    return render_template(
+        "recipes.html",
+        recipes=recipes,
+        page=page,
+        per_page=per_page,
+        has_more=has_more,
+        q=q
+    )
+
+
+@app.route('/recipes/<int:recipe_id>')
+def recipe_detail(recipe_id):
+    if not session.get('logged_in'):
+        return redirect('/login')
+
+    recipe_sql = """
+      SELECT r.recipe_id,
+             r.title,
+             r.instructions,
+             AVG(rv.rating)::float AS avg_rating
+      FROM recipe r
+      LEFT JOIN review rv ON rv.recipe_id = r.recipe_id
+      WHERE r.recipe_id = :rid
+      GROUP BY r.recipe_id, r.title, r.instructions
+    """
+    rec = g.conn.execute(text(recipe_sql), {"rid": recipe_id}).mappings().first()
+    if not rec:
+        abort(404)
+
+    recipe = {
+        "recipe_id": rec["recipe_id"],
+        "title": rec["title"],
+        "instructions": rec["instructions"],
+        "avg_rating": rec["avg_rating"]
+    }
+
+    return render_template("recipe_detail.html", recipe=recipe)
+
+##############################
 if __name__ == "__main__":
     import click
 
