@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+    <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+<html>
+<head>
+    <title>Create New Event</title>
+</head>
+<body>
+    <a href="/">← Back to Home</a>
+    
+    <h2>Create New Event</h2>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for category, message in messages %}
+                <h4 style="color: {{ 'red' if category == 'error' else 'green' }};">{{ message }}</h4>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/create_event">
+        <label for="event_name">Event Name:</label><br>
+        <input type="text" id="event_name" name="event_name" required><br><br>
+
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location" required><br><br>
+
+        <h3>Event Date and Time</h3>
+        
+        <label>Date:</label><br>
+        <input type="text" name="month" placeholder="MM" size="2" maxlength="2" required> /
+        <input type="text" name="day" placeholder="DD" size="2" maxlength="2" required> /
+        <input type="text" name="year" placeholder="YYYY" size="5" maxlength="4" required><br><br>
+
+        <label>Time:</label><br>
+        <input type="text" name="hour" placeholder="HH (1-12)" size="10" maxlength="2" required> :
+        <input type="text" name="minute" placeholder="MM (00-59)" size="10" maxlength="2" required>
+        
+        <select name="ampm" required>
+            <option value="AM">AM</option>
+            <option value="PM">PM</option>
+        </select><br><br>
+
+        <input type="submit" value="Create Event">
+    </form>
+</body>
+</html>

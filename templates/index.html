@@ -6,27 +6,47 @@
     }
   </style>
 
-
 <body>
-  <h2>Welcome, {{ session.name }}!</h2>
+
+  <header style="
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      padding: 10px 0;
+      margin-bottom: 20px;
+  ">
+      <h2 style="margin: 0;">Welcome, {{ session.get('name') }}!</h2>
+      
+      <a href="/logout" 
+        style="padding: 5px 5px; 
+                text-decoration: none; 
+                border-radius: 5px; 
+                white-space: nowrap;">
+          Logout
+      </a>
+  </header>
+
+  <a href="/create_event" style="padding: 5px 5px; border-radius: 5px; text-decoration: none; font-weight: bold;">
+    + Create New Event
+  </a>
 
   <h2>Upcoming Events:</h2>
 
   {% for event in upcoming_events %}
   <div>
-      <p>
-          {{ event.event_name }}<br>
-          Host: {{ event.host }}<br>
-          Details: {{ event.location }} on {{ event.date }}<br>
-          Status: 
-          {% if event.status == True %}
-              Attending
-          {% elif event.status == False %}
-              Not Attending
-          {% else %}
-              TBD
-          {% endif %}
-      </p>
+    <p>
+      <a href="/event/{{ event.event_id }}">{{ event.event_name }}</a><br>
+      {{ event.date }}<br>
+      {% if event.is_host == True %}
+        Hosting
+      {% elif event.status == True %}
+        Attending
+      {% elif event.status == False %}
+        Not Attending
+      {% else %}
+        TBD
+      {% endif %}
+    </p>
   </div>
   {% endfor %}
 
@@ -34,32 +54,22 @@
 
   {% for event in past_events %}
   <div>
-      <p>
-          {{ event.event_name }}<br>
-          Host: {{ event.host }}<br>
-          Details: {{ event.location }} on {{ event.date }}<br>
-          Status: 
-          {% if event.status == True %}
-              Attended
-          {% elif event.status == False %}
-              Did Not Attend
-          {% else %}
-              No Response
-          {% endif %}
-      </p>
+    <p>
+      <a href="/event/{{ event.event_id }}">{{ event.event_name }}</a><br>
+      {{ event.date }}<br>
+      {% if event.status == True %}
+        Attended
+      {% elif event.status == False %}
+        Did Not Attend
+      {% else %}
+        No Response
+      {% endif %}
+    </p>
   </div>
   {% endfor %}
 
-<p><a href="another">Go to the other page</a></p>
-
-<p><a href="/recipes">🍽️ Browse Recipes</a></p>
-
-
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
+  <p><a href="/recipes">Browse Recipes</a></p>
 
 </body>
-
 
 </html>

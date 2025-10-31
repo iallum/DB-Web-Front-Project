@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ event.event_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white; 
+        }
+        h1, h2 {
+            color: #333;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        a {
+            color: #333;
+            text-decoration: underline;
+        }
+        a:hover {
+            color: #000;
+        }
+        .header, .section { 
+            padding: 15px 0;
+            margin-bottom: 10px;
+        }
+
+        button, input[type="submit"] {
+            padding: 8px 15px;
+            cursor: pointer;
+            border: 1px solid #000;
+            border-radius: 0;
+            font-weight: bold;
+            background-color: white;
+            color: #000;
+            transition: background-color 0.2s;
+        }
+        button:hover, input[type="submit"]:hover {
+            background-color: #eee;
+        }
+        .cta-button {
+            border: 2px solid #000;
+        }
+        .cta-button:hover {
+            background-color: #f0f0f0;
+        }
+        .delete-button {
+            border: 2px solid #000;
+        }
+
+        .event-details-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+        .event-info {
+            line-height: 1.6;
+        }
+        .guest-section-title {
+            font-weight: bold;
+            color: #333;
+            margin-top: 15px;
+            margin-bottom: 8px;
+            font-size: 13pt;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .guest-item {
+            padding: 4px 0;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .recipe-item {
+            padding: 10px 0;
+            border-bottom: 1px dashed #ddd;
+        }
+        .comment {
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+        }
+        .comment-author {
+            font-weight: bold;
+            color: #333;
+        }
+        .comment-date {
+            color: #666;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .comment-text {
+            margin-top: 8px;
+            color: #555;
+            line-height: 1.5;
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+        .empty-state {
+            color: #999;
+            font-style: italic;
+            padding: 15px 0;
+            text-align: center;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 0;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-btn:hover {
+            color: #000;
+        }
+        .flashes {
+            border: 1px solid #000; 
+            background-color: #fff; 
+            color: #000; 
+            margin-bottom: 20px; 
+            padding: 10px; 
+            font-weight: bold;
+        }
+        .flash-error {
+            border: 1px solid #000; 
+            background-color: #fff; 
+            color: #000; 
+            margin-bottom: 20px; 
+            padding: 10px; 
+            font-weight: bold;
+        }
+        .invite-form {
+            display: flex; 
+            gap: 10px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+<div id="uninviteModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('uninviteModal').style.display='none'">&times;</span>
+        <h2>Select Guests to Uninvite</h2>
+
+        {% set all_guests = confirmed + declined + pending %}
+
+        {% if all_guests %}
+        <form method="POST" action="/event/{{ event.event_id }}/uninvite_guests">
+            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px;">
+                {% for guest in all_guests %}
+                <div style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <label>
+                        <input type="checkbox" name="user_id_to_uninvite" value="{{ guest.user_id }}">
+                        {{ guest.name }}
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="text-align: right;">
+                <button type="button" onclick="document.getElementById('uninviteModal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="delete-button" style="margin-left: 10px;">
+                    Confirm Uninvite
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <p>No guests currently invited.</p>
+        {% endif %}
+    </div>
+</div>
+
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('editModal').style.display='none'">&times;</span>
+        <h2>Edit Event: {{ event.event_name }}</h2>
+        
+        <form method="POST" action="/event/{{ event.event_id }}/edit_details">
+            
+            <div style="margin-bottom: 15px;">
+                <label for="event_name">Event Name:</label>
+                <input type="text" id="event_name" name="event_name" value="{{ event.event_name }}" required 
+                       style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="location">Location:</label>
+                <input type="text" id="location" name="location" value="{{ event.location }}" required 
+                       style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc;">
+            </div>
+
+            <div style="margin-bottom: 15px;">
+                <label for="date_time">Date and Time (e.g., 10/30/25 at 08:00 PM):</label>
+                <input type="text" id="date_time" name="date_time" value="{{ event.date_time }}" required 
+                    style="width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc;">
+            </div>
+
+            <div style="text-align: right;">
+                <button type="button" onclick="document.getElementById('editModal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="cta-button" style="margin-left: 10px;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="editCommentModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('editCommentModal').style.display='none'">&times;</span>
+        <h2>Edit Comment</h2>
+        
+        <form id="editCommentForm" method="POST">
+            <textarea id="edited_comment_text" name="edited_comment_text" rows="5" required 
+                      style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 10px; border: 1px solid #ccc;"></textarea>
+            
+            <div style="text-align: right;">
+                <button type="button" onclick="document.getElementById('editCommentModal').style.display='none'">
+                    Cancel
+                </button>
+                <button type="submit" class="cta-button" style="margin-left: 10px;">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(commentId, currentText) {
+        const modal = document.getElementById('editCommentModal');
+        const form = document.getElementById('editCommentForm');
+        const textarea = document.getElementById('edited_comment_text');
+        form.action = `/event/{{ event.event_id }}/comment/${commentId}/edit`;
+        textarea.value = currentText;
+        modal.style.display = 'block';
+    }
+</script>
+
+<body>
+    <a href="/" class="back-link">← Back to Home</a>
+    
+    <div class="header">
+        <h1>{{ event.event_name }}</h1>
+        
+        <div class="event-details-container">
+            <div class="event-info">
+                <div><strong>Location:</strong> {{ event.location }}</div>
+                <div><strong>Date & Time:</strong> {{ event.date_time }}</div>
+            </div>
+            {% if is_host %}
+            <button type="button" onclick="document.getElementById('editModal').style.display='block'" class="cta-button">
+                Edit Event Details
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if not is_past_event and not is_host%}
+    <div class="section attendance-form">
+        <h3>Will you attend?</h3>
+        <form method="POST" action="/event/{{ event.event_id }}/update_status">
+            <button type="submit" name="status" value="yes">Yes</button>
+            <button type="submit" name="status" value="no">No</button>
+            <button type="submit" name="status" value="tbd">Maybe</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <h2>Guest List</h2>
+
+        {% if not is_past_event and is_host %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% set last_message = messages[-1] %}
+                {% set category = last_message[0] %}
+                {% set message_text = last_message[1] %}
+
+                {% if category == 'error' %}
+                <div class="flash-error">
+                    <p style="margin: 0;">{{ message_text }}</p>
+                </div>
+                {% endif %}
+            {% endif %}
+        {% endwith %}
+        
+        <div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px;">
+            <h3>Invite a Guest</h3>
+            <form method="POST" action="/event/{{ event.event_id }}/invite" class="invite-form">
+                <input type="email" name="guest_email" placeholder="Enter guest email (must be a registered user)" required 
+                       style="flex-grow: 1; padding: 8px; border: 1px solid #ccc;">
+                <button type="submit" class="cta-button">
+                    Invite
+                </button>
+            </form>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin:0; border-bottom: none; padding-bottom: 0;">Guests</h3>
+            <button type="button" onclick="document.getElementById('uninviteModal').style.display='block'" class="delete-button"
+                    style="font-size: 14px; padding: 6px 12px;">
+                Uninvite Guests
+            </button>
+        </div>
+        {% endif %}
+        
+        <div class="guest-section-title">Host</div>
+        <div class="guest-item">
+            <span>{{ event.host_name }}</span>
+        </div>
+
+        {% if confirmed %}
+        <div class="guest-section-title">Attending ({{ confirmed|length }})</div>
+        {% for guest in confirmed %}
+        <div class="guest-item">
+            <span>{{ guest.name }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if declined %}
+        <div class="guest-section-title">Not Attending ({{ declined|length }})</div>
+        {% for guest in declined %}
+        <div class="guest-item">
+            <span>{{ guest.name }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if pending %}
+        <div class="guest-section-title">Uncertain/No Response ({{ pending|length }})</div>
+        {% for guest in pending %}
+        <div class="guest-item">
+            <span>{{ guest.name }}</span>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        {% if not confirmed and not declined and not pending and not is_host %}
+        <div class="empty-state">No guests invited yet</div>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Recipes</h2>
+        {% if recipes %}
+            {% for recipe in recipes %}
+            <div class="recipe-item">
+                <a href="/recipes/{{ recipe.recipe_id }}" style="font-weight: bold;">{{ recipe.title }}</a>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">No recipes added yet</div>
+        {% endif %}
+    </div>
+
+    <div class="section">
+        <h2>Comments</h2>
+
+        <div style="margin-bottom: 20px; border: 1px solid #ddd; padding: 15px;">
+            <h3>Write a Comment</h3>
+            {% if session.get('logged_in') %}
+            <form method="POST" action="/event/{{ event.event_id }}/comment/add">
+                <textarea name="comment_text" rows="3" placeholder="Write your comment here..." required 
+                        style="width: 100%; padding: 10px; box-sizing: border-box; margin-bottom: 10px; border: 1px solid #ccc;"></textarea>
+                <button type="submit" class="cta-button">
+                    Post
+                </button>
+            </form>
+            {% else %}
+            <p>Please <a href="/login">log in</a> to post a comment.</p>
+            {% endif %}
+        </div>
+
+        {% if comments %}
+            {% for comment in comments %}
+            <div class="comment">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div>
+                        <span class="comment-author">{{ comment.author }}</span>
+                        <span class="comment-date">{{ comment.date_time }}</span>
+                    </div>
+                    {% if session.get('user_id')|int == comment.author_id %}
+                    <div style="float: right;">
+                        <button onclick="openEditModal({{ comment.comment_id }}, '{{ comment.text | e }}')" 
+                                style="font-size: 12px; padding: 4px 8px; margin-left: 5px;">
+                            Edit
+                        </button>
+                        <form method="POST" action="/event/{{ event.event_id }}/comment/{{ comment.comment_id }}/delete" style="display:inline;">
+                            <button type="submit" 
+                                    onclick="return confirm('Are you sure you want to delete this comment?');"
+                                    class="delete-button"
+                                    style="font-size: 12px; padding: 4px 8px; border: 1px solid #000;">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="comment-text">{{ comment.text }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">No comments yet</div>
+        {% endif %}
+    </div>
+</body>
+</html>
+
+{% if is_host %}
+<div class="section" style="text-align: center; border-top: 1px solid #ddd; padding-top: 20px;">
+    <form method="POST" action="/event/{{ event.event_id }}/delete" onsubmit="return confirm('WARNING: Are you sure you want to delete this event? This action cannot be undone.');">
+        <button type="submit" class="delete-button" 
+                style="padding: 10px 20px; font-size: 16px;">
+            Delete Event
+        </button>
+    </form>
+</div>
+{% endif %}
